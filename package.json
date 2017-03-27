@@ -17,9 +17,9 @@
   },
   "homepage": "https://github.com/antirek/openvox-sms-worker",
   "dependencies": {
-    "amqplib": "^0.3.2",
     "config": "^1.24.0",
     "joi": "^6.0.8",
+    "kue": "^0.11.5",
     "openvox-sms": "0.0.9",
     "tracer": "^0.8.7",
     "when": "^3.7.2"

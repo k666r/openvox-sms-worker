@@ -1,8 +1,8 @@
 'use strict';
 
-var amqp = require('amqplib');
+var kue = require('kue');
 var Joi = require('joi');
-var when = require('when')
+var when = require('when');
 var console = require('tracer').colorConsole();
 
 var openvoxWrapper = require('./lib/openvoxWrapper');
@@ -13,12 +13,11 @@ var Handler = require('./lib/handler');
 var Server = function (config) {
 
     var configSchema = require('./lib/configSchema');
-    var smsSender, validator, logger;
-    var connection, channel;    
+    var smsSender, validator;
 
     var validate = function (file, schema) {
         var defer = when.defer();
-        Joi.validate(file, schema, function (err, value){
+        Joi.validate(file, schema, function (err, value) {
             if (err) {
                 defer.reject(err);
             } else {
@@ -42,28 +41,10 @@ var Server = function (config) {
                 return init();
             })
             .then(function () {
-                return amqp.connect(config['amqp'].url);
+                var queue = kue.createQueue();
+                var handler = new Handler(validator, smsSender);
+                queue.process(config.kue.queue, handler.handle);
             })
-            .then(function (conn) {
-                console.log('connection to amqp opened')
-                connection = conn;
-                process.once('SIGINT', function() { connection.close(); });
-                return connection.createChannel()
-            })
-            .then(function (ch) {
-                channel = ch;
-                return channel.assertQueue(config['amqp'].queue, {durable: true});
-            })
-            .then(function() {
-                return channel.prefetch(1); 
-            })
-            .then(function() {
-                var handler = new Handler(channel, validator, smsSender);                
-
-                console.log("ready for work");
-                return channel.consume(config['amqp'].queue, handler.handle, {noAck: false});                
-            })
-            .then(null, console.log);
     };
 };
 

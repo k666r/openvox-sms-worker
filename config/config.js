@@ -5,8 +5,7 @@ module.exports = {
         username: 'admin',
         password: 'admin'
     },
-    amqp: {
-        url: 'amqp://localhost',
+    kue: {
         queue: 'task_queue'
     }
 };
